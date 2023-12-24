@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Gallery</title>
+
+    <script src="{% static 'pdfjs/build/pdf.js' %}"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .pdf-card {
+            display: inline-block;
+            text-align: left;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            padding: 20px;
+            width: 300px;
+            transition: all 0.3s ease-in-out; /* Add a smooth transition effect */
+        }
+
+        .pdf-card embed {
+            width: 100%;
+            height: 300px; /* Adjust the height as needed */
+        }
+
+        .pdf-card a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .pdf-name {
+            font-size: 18px;
+            color: #333333;
+            margin-top: 10px;
+        }
+
+        .pdf-card.expanded {
+            width: 100%; /* Expand to full width */
+            height: 80vh; /* Adjust the height as needed */
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .pdf-card.expanded embed {
+            width: 100%;
+            height: 100%; /* Expand to full height */
+        }
+
+        .close-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .zoom-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+
+<!-- pdf_gallery.html -->
+
+<div id="pdfContainer">
+    {% for pdf in pdfs %}
+        <div class="pdf-card">
+            <p>{{ pdf.name }}</p>
+            <embed src="{{ pdf.pdf_file.url }}" type="application/pdf">
+            <div class="pdf-name">{{ pdf.name }}</div>
+        </div>
+    {% endfor %}
+</div>
+
+
+<script>
+    function expandPdf(pdfCard) {
+        pdfCard.classList.toggle('expanded');
+
+        // Close button functionality
+        if (pdfCard.classList.contains('expanded')) {
+            // Add a close button when the card is expanded
+            const closeButton = document.createElement('div');
+            closeButton.innerHTML = 'Close';
+            closeButton.className = 'close-btn';
+            closeButton.onclick = function () {
+                pdfCard.classList.remove('expanded');
+                closeButton.remove();
+                removeZoomButton();
+            };
+            document.body.appendChild(closeButton);
+
+            // Add a zoom button when the card is expanded
+            const zoomButton = document.createElement('div');
+            zoomButton.innerHTML = 'Zoom';
+            zoomButton.className = 'zoom-btn';
+            zoomButton.onclick = function () {
+                toggleZoom(pdfCard);
+            };
+            document.body.appendChild(zoomButton);
+        } else {
+            // Remove the close and zoom buttons when the card is collapsed
+            const closeButton = document.querySelector('.close-btn');
+            const zoomButton = document.querySelector('.zoom-btn');
+            if (closeButton) {
+                closeButton.remove();
+            }
+            if (zoomButton) {
+                zoomButton.remove();
+            }
+        }
+    }
+
+    function toggleZoom(pdfCard) {
+        pdfCard.classList.toggle('zoomed');
+    }
+
+    function removeZoomButton() {
+        const zoomButton = document.querySelector('.zoom-btn');
+        if (zoomButton) {
+            zoomButton.remove();
+        }
+    }
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const pdfCards = document.querySelectorAll('.pdf-card');
+
+        pdfCards.forEach(function (pdfCard) {
+            pdfCard.addEventListener('wheel', function (e) {
+                if (pdfCard.classList.contains('zoomed')) {
+                    e.preventDefault();
+
+                    const delta = e.deltaY || e.detail || e.wheelDelta;
+
+                    if (delta > 0) {
+                        pdfCard.style.width = pdfCard.offsetWidth * 0.9 + 'px';
+                        pdfCard.style.height = pdfCard.offsetHeight * 0.9 + 'px';
+                    } else {
+                        pdfCard.style.width = pdfCard.offsetWidth / 0.9 + 'px';
+                        pdfCard.style.height = pdfCard.offsetHeight / 0.9 + 'px';
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
